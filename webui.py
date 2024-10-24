@@ -391,8 +391,11 @@ def startMapping(audioPath, audioTitle, audioArtist,
                                              unconditional_conditioning=uc,
                                              eta=0.0,
                                              tqdm_class=progress.tqdm)
+            
+            print(samples_ddim)
             # reamber generate example
             x_samples_ddim = model.model.decode(samples_ddim).cpu().numpy()
+            print(x_samples_ddim)
 
             save_name = f"{audioArtist} - {audioTitle}"
             save_dir = os.path.join(output_path, save_name)
@@ -486,9 +489,8 @@ def startMapping(audioPath, audioTitle, audioArtist,
         gr.update(visible=True, value=prompt) # prompt overview
     ]
 
+
 def generate_feature_dict_mai(audioPath, audioTitle, audioArtist, rs_switch, rs, diff_switch, diff, cc_switch, cc,
-                    swp_switch, swp, swp_score_switch, swp_score,
-                    blt_switch, blt, blt_score_switch, blt_score,
                     maptype_switch, slider_switch, mapType, slider, count, step, scale, auto_snap, seed):
     feature_dict = {}
     human_readable_dict = OrderedDict()
@@ -517,17 +519,6 @@ def generate_feature_dict_mai(audioPath, audioTitle, audioArtist, rs_switch, rs,
 
     add_value_if(slider_switch, 'slide_ratio', slider, "slide", slider)
 
-    patterns = [
-        (swp_switch, 'Swipe', swp, swp_score_switch, swp_score),
-        (blt_switch, 'Bullet', blt, blt_score_switch, blt_score),
-    ]
-    for pattern_switch, pattern_name, pattern_value, pattern_score_switch, pattern_score_value in patterns:
-        add_value_if(pattern_switch, pattern_name.lower(), pattern_value.startswith("more"),
-                     pattern_name.lower(), "more" if pattern_value.startswith("more") else "less")
-        # add_value_if(pattern_switch, pattern_name.lower(), pattern_name)
-        add_value_if(pattern_score_switch, pattern_name.lower() + "_ett", pattern_score_value,
-                     pattern_name.lower() + "-msd", pattern_score_value)
-
     # human_readable_dict['rm-interval'] = rm_jacks
     human_readable_dict['snapping'] = auto_snap
     human_readable_dict['count'] = count
@@ -537,8 +528,6 @@ def generate_feature_dict_mai(audioPath, audioTitle, audioArtist, rs_switch, rs,
     return feature_dict, human_readable_dict
 
 def startMapping_mai(audioPath, audioTitle, audioArtist, rs_switch, rs, diff_switch, diff, cc_switch, cc,
-                swp_switch, swp, swp_score_switch, swp_score,
-                blt_switch, blt, blt_score_switch, blt_score,
                 maptype_switch, slider_switch, mapType, slider, count, step, scale, auto_snap,
                 seed, progress=gr.Progress()):
     if cuda_available:
@@ -576,8 +565,6 @@ def startMapping_mai(audioPath, audioTitle, audioArtist, rs_switch, rs, diff_swi
                 if progress_step == 0:
                     feature_dict, h_dict = generate_feature_dict_mai(
                         audioPath, audioTitle, audioArtist, rs_switch, rs, diff_switch, diff, cc_switch, cc,
-                        swp_switch, swp, swp_score_switch, swp_score,
-                        blt_switch, blt, blt_score_switch, blt_score,
                         maptype_switch, slider_switch, mapType, slider, count, step, scale, auto_snap, seed
                     )
                     def prompt_mapping(item):
@@ -724,6 +711,7 @@ def startMapping_mai(audioPath, audioTitle, audioArtist, rs_switch, rs, diff_swi
         gr.update(visible=True), # output file type
         gr.update(visible=True, value=prompt) # prompt overview
     ]
+
 
 if __name__ == "__main__":
 
@@ -1087,6 +1075,7 @@ if __name__ == "__main__":
                     invert_out = gr.Dataframe(headers=["Parameter", "Value"], interactive=False)
             invert_btn.click(startInvertion, [chart_path, rate], invert_out, api_name='chart2prompt')
 
+
         with gr.Tab("Maimai DX"):
             gr.Markdown("Working project: Generate maimai chart from audio")
 
@@ -1182,56 +1171,10 @@ if __name__ == "__main__":
                         rs_switch.select(rss_switch, None, rs)
 
 
-                        with gr.Row():
-                            with gr.Column(scale=1, min_width=100):
-                                swp_switch = gr.Checkbox(label="swipe")
-                                swp_score_switch = gr.Checkbox(label="swipe MSD")
-                            with gr.Column(scale=3, min_width=100):
-                                swp = gr.Radio(['more swipe', 'less swipe'],
-                                                    value='more swipe',
-                                                    visible=False, show_label=False)
-                                swp_score = gr.Slider(5, 35, value=17, label="swipe MSD:",
-                                                            visible=False)
-
-                        def swpe_switch(evt: gr.SelectData):
-                            return gr.update(visible=evt.selected)
-
-
-                        def swpss_switch(evt: gr.SelectData):
-                            return gr.update(visible=evt.selected)
-
-
-                        swp_switch.select(swpe_switch, None, swp)
-                        swp_score_switch.select(swpss_switch, None, swp_score)
-
-
-                        with gr.Row():
-                            with gr.Column(scale=1, min_width=100):
-                                blt_switch = gr.Checkbox(label="bullet")
-                                blt_score_switch = gr.Checkbox(label="bullet MSD")
-                            with gr.Column(scale=3, min_width=100):
-                                blt = gr.Radio(['more bullet', 'less bullet'],
-                                                    value='more bullet',
-                                                    visible=False, show_label=False)
-                                blt_score = gr.Slider(5, 35, value=17, label="bullet MSD:",
-                                                            visible=False)
-
-                        def blte_switch(evt: gr.SelectData):
-                            return gr.update(visible=evt.selected)
-
-
-                        def bltss_switch(evt: gr.SelectData):
-                            return gr.update(visible=evt.selected)
-
-
-                        blt_switch.select(blte_switch, None, blt)
-                        blt_score_switch.select(bltss_switch, None, blt_score)
 
             btn = gr.Button('Start Generation', variant='primary')
 
             inp = [audioPath, audioTitle, audioArtist, rs_switch, rs, diff_switch, diff, cc_switch, cc,
-                        swp_switch, swp, swp_score_switch, swp_score,
-                        blt_switch, blt, blt_score_switch, blt_score,
                         maptype_switch, slider_switch, mapType, slider, count, step, scale, auto_snap,
                         seed
                         ]
@@ -1260,6 +1203,7 @@ if __name__ == "__main__":
             btn.click(startMapping, inp, [out_file, fileName, fileFormat, prompt_out],
                     api_name='generate_mai')
             
+
         with gr.Tab("Other Modes (to be continue)"):
             pass
 
