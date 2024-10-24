@@ -1,0 +1,15 @@
+.idea
+logs
+__pycache__
+result.pdf
+.vscode
+/data/
+/outputs/
+/configs/mapping_config
+/models/ckpt
+*.exe
+build
+dist
+*.spec
+.venv
+.DS_Store
