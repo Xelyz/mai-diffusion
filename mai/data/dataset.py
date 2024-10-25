@@ -11,7 +11,7 @@ from pytorch_lightning import Callback
 from torch.utils.data import Dataset
 import cv2
 import hashlib
-from pytorch_lightning.utilities.distributed import rank_zero_only
+from pytorch_lightning.utilities import rank_zero_only
 import sys
 import os
 sys.path.append(os.getcwd())
