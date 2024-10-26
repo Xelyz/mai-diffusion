@@ -18,8 +18,6 @@ sys.path.append(os.getcwd())
 
 from mug import util
 from mug.data.convertor import *
-import minacalc
-
 
 class OsuDataset(Dataset):
     def __init__(self,

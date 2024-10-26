@@ -1,5 +1,8 @@
-from mug.model.models import *
-
+# from mug.model.models import *
+import torch
+# torch.backends.cudnn.enabled = False
+import torch.nn
+import torch.nn.functional
 
 class ManiaReconstructLoss(torch.nn.Module):
 
