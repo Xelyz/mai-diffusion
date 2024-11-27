@@ -1,5 +1,5 @@
 import time
-
+import re
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
@@ -170,6 +170,7 @@ def get_slide_path(note_content: str):
     path = []
     position = None
     slide_shape = None
+    note_content = re.sub(r'\[.*?\]', '', note_content)
     while i < len(note_content):
         char = note_content[i]
         if not position:
@@ -184,6 +185,8 @@ def get_slide_path(note_content: str):
             elif char.isdigit():
                 path.extend(get_slide_component_path(position, slide_shape, int(char)))
                 position = int(char)
+                if slide_shape == 'w':
+                    return path
                 slide_shape = None if slide_shape != 'V' else '-'
         i += 1
     path.append(Touch("A", position))
@@ -193,6 +196,7 @@ slide_shape_mapping = {
     "l2": [Touch('A', 0), Touch('B', 1)],
     "l3": [Touch('A', 0), Touch('B', 1), Touch('B', 2)],
     "l4": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 4)],
+    "w": [Touch('A', 0), (Touch('B', 0), Touch('B', 1), Touch('B', 7)), (Touch('C'), Touch('B', 2), Touch('B', 6)), (Touch('B', 4), Touch('A', 3), Touch('A', 5))],
     "r1": [Touch('A', 0)],
     "r2": [Touch('A', 0), Touch('A', 1)],
     "r3": [Touch('A', 0), Touch('A', 1), Touch('A', 2)],
@@ -273,6 +277,8 @@ def get_slide_component_path(start, slide_shape, end):
             path.extend([(touch + start - 1) % 8 + 1 for touch in slide_shape_mapping['vh']])
             path.extend([(touch + end - 1) % 8 + 1 for touch in slide_shape_mapping['vt']])
             return path
+        case 'w':
+            path = slide_shape_mapping['w']
     return [(touch * reflect + start - 1) % 8 + 1 for touch in path]
 
 def remove_intractable_mania_mini_jacks(hit_objects, verbose=True, jack_interval=90):
