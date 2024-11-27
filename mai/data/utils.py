@@ -3,7 +3,6 @@ import time
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-
 def parse_hit_objects(line, column_width):
     if line is None:
         return None, None, None
@@ -138,6 +137,143 @@ def gridify(hit_objects, verbose=True):
         new_hit_objects.append(",".join(elements))
     return new_hit_objects, bpm, offset
 
+class Touch:
+    def __init__(self, area, position = 1):
+        self.area = area
+        self.position = int(position) # 1-8
+
+    def get_id(self):
+        if self.area == 'C':
+            return 16  # C只有1个区域，固定返回16
+        elif self.area in "ABDE":
+            return "ABDE".index(self.area) * 8 + (self.position - 1) + (1 if self.area in "DE" else 0)
+
+    def __repr__(self):
+        if self.area == 'C':
+            return f'{self.area}'
+        return f'{self.area}{self.position}'
+
+    def __add__(self, other):
+        return Touch(self.area, self.position + other)
+    
+    def __sub__(self, other):
+        return Touch(self.area, self.position - other)
+
+    def __mul__(self, other):
+        return Touch(self.area, self.position * other)
+
+    def __mod__(self, other):
+        return Touch(self.area, self.position % other)
+        
+def get_slide_path(note_content: str):
+    i = 0
+    path = []
+    position = None
+    slide_shape = None
+    while i < len(note_content):
+        char = note_content[i]
+        if not position:
+            if char.isdigit():
+                position = int(char)
+        elif not slide_shape:
+            if char in "<>^-vVszpqw":
+                slide_shape = char
+        else:
+            if char in 'pq' and char == slide_shape:
+                slide_shape += char
+            elif char.isdigit():
+                path.extend(get_slide_component_path(position, slide_shape, int(char)))
+                position = int(char)
+                slide_shape = None if slide_shape != 'V' else '-'
+        i += 1
+    path.append(Touch("A", position))
+    return path
+
+slide_shape_mapping = {
+    "l2": [Touch('A', 0), Touch('B', 1)],
+    "l3": [Touch('A', 0), Touch('B', 1), Touch('B', 2)],
+    "l4": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 4)],
+    "r1": [Touch('A', 0)],
+    "r2": [Touch('A', 0), Touch('A', 1)],
+    "r3": [Touch('A', 0), Touch('A', 1), Touch('A', 2)],
+    "r4": [Touch('A', 0), Touch('A', 1), Touch('A', 2), Touch('A', 3)],
+    "r5": [Touch('A', 0), Touch('A', 1), Touch('A', 2), Touch('A', 3), Touch('A', 4)],
+    "r6": [Touch('A', 0), Touch('A', 1), Touch('A', 2), Touch('A', 3), Touch('A', 4), Touch('A', 5)],
+    "r7": [Touch('A', 0), Touch('A', 1), Touch('A', 2), Touch('A', 3), Touch('A', 4), Touch('A', 5), Touch('A', 6)],
+    "r0": [Touch('A', 0), Touch('A', 1), Touch('A', 2), Touch('A', 3), Touch('A', 4), Touch('A', 5), Touch('A', 6), Touch('A', 7)],
+    "z": [Touch('A', 0), Touch('B', 1), Touch('B', 2), Touch('C'), Touch('B', 6), Touch('B', 5)],
+    "vh": [Touch('A', 0), Touch('B', 0)],
+    "vt": [Touch('C'), Touch('B', 0)],
+    "p1": [Touch('A', 0), Touch('B', 7), Touch('B', 6), Touch('B', 5), Touch('B', 4), Touch('B', 3), Touch('B', 2)],
+    "p2": [Touch('A', 0), Touch('B', 7), Touch('B', 6), Touch('B', 5), Touch('B', 4), Touch('B', 3)],
+    "p3": [Touch('A', 0), Touch('B', 7), Touch('B', 6), Touch('B', 5), Touch('B', 4)],
+    "p4": [Touch('A', 0), Touch('B', 7), Touch('B', 6), Touch('B', 5)],
+    "p5": [Touch('A', 0), Touch('B', 7), Touch('B', 6), Touch('B', 5), Touch('B', 4), Touch('B', 3), Touch('B', 2), Touch('B', 1), Touch('B', 0), Touch('B', 7), Touch('B', 6)],
+    "p6": [Touch('A', 0), Touch('B', 7), Touch('B', 6), Touch('B', 5), Touch('B', 4), Touch('B', 3), Touch('B', 2), Touch('B', 1), Touch('B', 0), Touch('B', 7)],
+    "p7": [Touch('A', 0), Touch('B', 7), Touch('B', 6), Touch('B', 5), Touch('B', 4), Touch('B', 3), Touch('B', 2), Touch('B', 1), Touch('B', 0)],
+    "pp1": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 3), Touch('A', 2)],
+    "pp2": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 3)],
+    "pp3": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 3), Touch('A', 2), Touch('A', 1), Touch('B', 0), Touch('C'), Touch('B', 3)],
+    "pp4": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 3), Touch('A', 2), Touch('A', 1), Touch('B', 0), Touch('C'), Touch('B', 4)],
+    "pp5": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 3), Touch('A', 2), Touch('A', 1), Touch('B', 0), Touch('C'), Touch('B', 5)],
+    "pp6": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 3), Touch('A', 2), Touch('A', 1), Touch('B', 0), Touch('B', 7)],
+    "pp7": [Touch('A', 0), Touch('B', 0), Touch('C'), Touch('B', 3), Touch('A', 2), Touch('A', 1), Touch('B', 0)]
+}
+
+def get_slide_component_path(start, slide_shape, end):
+    """
+    exclude the A area at the end
+    start, end: 1-8
+    """
+    reflect = 1
+    distance = (end - start) % 8
+    path = []
+    match slide_shape:
+        case '-' | 'V':
+            if distance > 4:
+                reflect = -1
+                distance = 8 - distance
+            path = slide_shape_mapping[f'l{distance}']
+        case '^':
+            if distance > 4:
+                reflect = -1
+                distance = 8 - distance
+            path = slide_shape_mapping[f'r{distance}']
+        case '<':
+            if start in [1, 2, 7, 8]:
+                reflect = -1
+                distance = (8 - distance) % 8
+            path = slide_shape_mapping[f'r{distance}']
+        case '>':
+            if start in [3, 4, 5, 6]:
+                reflect = -1
+                distance = (8 - distance) % 8
+            path = slide_shape_mapping[f'r{distance}']
+        case 'p':
+            path = slide_shape_mapping[f'p{distance}']
+        case 'q':
+            reflect = -1
+            distance = 8 - distance
+            path = slide_shape_mapping[f'p{distance}']
+        case 'pp':
+            path = slide_shape_mapping[f'pp{distance}']
+        case 'qq':
+            reflect = -1
+            distance = 8 - distance
+            path = slide_shape_mapping[f'pp{distance}']
+        case 'z':
+            assert distance == 4, f"{start}{slide_shape}{end}"
+            path = slide_shape_mapping['z']
+        case 's':
+            reflect = -1
+            distance = 8 - distance
+            assert distance == 4, f"{start}{slide_shape}{end}"
+            path = slide_shape_mapping['z']
+        case 'v':
+            path.extend([(touch + start - 1) % 8 + 1 for touch in slide_shape_mapping['vh']])
+            path.extend([(touch + end - 1) % 8 + 1 for touch in slide_shape_mapping['vt']])
+            return path
+    return [(touch * reflect + start - 1) % 8 + 1 for touch in path]
 
 def remove_intractable_mania_mini_jacks(hit_objects, verbose=True, jack_interval=90):
     key_count = 4  # TODO
@@ -274,33 +410,35 @@ def remove_intractable_mania_mini_jacks(hit_objects, verbose=True, jack_interval
 
 
 if __name__ == "__main__":
-    from mug.data.convertor import parse_osu_file, save_osu_file
-    import sys
+    print(','.join(map(str, get_slide_path('6-4-2-8-4<4'))))
 
-    path = sys.argv[-1]
+    # from mug.data.convertor import parse_osu_file, save_osu_file
+    # import sys
 
-    new_path = path.replace(".osu", "_refine.osu")
+    # path = sys.argv[-1]
 
-    hit_objects, meta = parse_osu_file(
-        path,
-        None)
+    # new_path = path.replace(".osu", "_refine.osu")
 
-    new_hit_objects = remove_intractable_mania_mini_jacks(hit_objects)
+    # hit_objects, meta = parse_osu_file(
+    #     path,
+    #     None)
 
-    override = {
-        "Version": "rm jack"
-    }
+    # new_hit_objects = remove_intractable_mania_mini_jacks(hit_objects)
 
-    with open(new_path, "w", encoding='utf8') as f:
-        for line in meta.file_meta:
-            if override is not None:
-                for k, v in override.items():
-                    if line.startswith(k + ":"):
-                        line = f"{k}: {v}"
-                        break
-            f.write(line + "\n")
+    # override = {
+    #     "Version": "rm jack"
+    # }
 
-        f.write("[HitObjects]\n")
+    # with open(new_path, "w", encoding='utf8') as f:
+    #     for line in meta.file_meta:
+    #         if override is not None:
+    #             for k, v in override.items():
+    #                 if line.startswith(k + ":"):
+    #                     line = f"{k}: {v}"
+    #                     break
+    #         f.write(line + "\n")
 
-        for hit_object in new_hit_objects:
-            f.write(hit_object + "\n")
+    #     f.write("[HitObjects]\n")
+
+    #     for hit_object in new_hit_objects:
+    #         f.write(hit_object + "\n")
