@@ -91,13 +91,17 @@ def count_beatmap_features(feature_yaml):
 
 
 def instantiate_from_config(config):
-    if not "target" in config:
-        if config == '__is_first_stage__':
-            return None
-        elif config == "__is_unconditional__":
-            return None
-        raise KeyError("Expected key `target` to instantiate.")
-    return get_obj_from_str(config["target"])(**config.get("params", dict()))
+    if isinstance(config, dict):
+        if "class_path" in config:
+            # Lightning CLI style config
+            module_path, class_name = config["class_path"].rsplit(".", 1)
+            module = importlib.import_module(module_path)
+            cls = getattr(module, class_name)
+            return cls(**(config.get("init_args", {})))
+        elif "target" in config:
+            # Old style config
+            return get_obj_from_str(config["target"])(**config.get("params", {}))
+    return config
 
 
 def get_obj_from_str(string, reload=False):
@@ -156,24 +160,24 @@ def load_audio(cache_dir, audio_path, n_mels, audio_hop_length, n_fft, sr, max_d
     np.savez_compressed(cache_path, y=y)
     return y
 
-if __name__ == '__main__':
-    import yaml
-    feature_yaml = yaml.safe_load(
-        open("configs\mug\mania_beatmap_features.yaml")
-    )
-    print(feature_dict_to_embedding_ids(
-        {"sr": 6.4, "ln_ratio": 0.0, "rc": True},
-        feature_yaml
-    ))
-    print(feature_dict_to_embedding_ids(
-        {"sr": 6.2, "ln_ratio": 0.5, "rc": False},
-        feature_yaml
-    ))
-    print(feature_dict_to_embedding_ids(
-        {"sr": 0, "ln_ratio": 0.5, "rc": True},
-        feature_yaml
-    ))
-    print(feature_dict_to_embedding_ids(
-        {"sr": 0.6, "hb": True},
-        feature_yaml
-    ))
+# if __name__ == '__main__':
+#     import yaml
+#     feature_yaml = yaml.safe_load(
+#         open("configs\mug\mania_beatmap_features.yaml")
+#     )
+#     print(feature_dict_to_embedding_ids(
+#         {"sr": 6.4, "ln_ratio": 0.0, "rc": True},
+#         feature_yaml
+#     ))
+#     print(feature_dict_to_embedding_ids(
+#         {"sr": 6.2, "ln_ratio": 0.5, "rc": False},
+#         feature_yaml
+#     ))
+#     print(feature_dict_to_embedding_ids(
+#         {"sr": 0, "ln_ratio": 0.5, "rc": True},
+#         feature_yaml
+#     ))
+#     print(feature_dict_to_embedding_ids(
+#         {"sr": 0.6, "hb": True},
+#         feature_yaml
+#     ))

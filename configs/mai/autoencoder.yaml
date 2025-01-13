@@ -1,26 +1,38 @@
 model:
-  base_learning_rate: 0.000003
-  target: mug.firststage.autoencoder.AutoencoderKL
+  base_learning_rate: 0.00001
+  target: mai.firststage.autoencoder.AutoencoderKL
   params:
     monitor: "val/loss"
-    ckpt_path: logs/2023-04-03T19-59-59_autoencoder/checkpoints/epoch=000050.ckpt
+    # ckpt_path: logs/2023-04-03T19-59-59_autoencoder/checkpoints/epoch=000050.ckpt
     # remove_prefix: 'model.first_stage_model.'
     # ignore_keys: [ 'encoder.conv_out', 'decoder.conv_in' ]
     # training_keys: [ 'encoder.conv_out', 'decoder.conv_in' ]
-    kl_weight: 0.00001
+    kl_weight: 1e-5
     lossconfig:
-      target: mug.firststage.losses.ManiaReconstructLoss
+      target: mai.firststage.losses.MaimaiReconstructLoss
       params:
+        weight_tap: 1.0
         weight_start_offset: 0.5
         weight_holding: 0.5
         weight_end_offset: 0.2
+        weight_break: 0.2
+        weight_ex: 0.3
+        weight_slide_head: 0.4
+        weight_touch: 1.0
+        weight_touch_offset: 0.5
+        weight_touch_holding: 0.5
+        weight_touch_hold_end_offset: 0.2
+        weight_hanabi: 0.1
+        weight_star_pass_through: 0.5
+        weight_star_end_offset: 0.3
+
         label_smoothing: 0.001
 
     ddconfig:
-      x_channels: 16 # key_count * 4
-      middle_channels: 64
-      z_channels: 16
-      num_groups: 8
+      x_channels: 182 # key_count * 4
+      middle_channels: 256
+      z_channels: 64
+      num_groups: 16
       channel_mult: [ 1,2,4,4 ]  # num_down = len(ch_mult)-1
       # Time
       # 0.04643990 4096
@@ -32,7 +44,7 @@ model:
       # 1.4860768 128
       # 2.9721536 64
       # 5.9443072 32
-      num_res_blocks: 1
+      num_res_blocks: 2
 
 data:
   target: MAI.DataModuleFromConfig
@@ -42,9 +54,7 @@ data:
     # num_workers: 0
     num_workers: 7
     common_params:
-      txt_file: [
-        "data/clean_filter_rate.txt"
-      ]
+      csv_file: "data/songs.csv"
       sr: 22050
       n_fft: 512
       max_audio_frame: 32768
@@ -65,7 +75,7 @@ data:
       # max_duration = audio_window_frame * max_audio_frame = 380.4357 s = 6 min 20 s
       # max_note_frame = max_audio_frame / audio_note_window_ratio = 8192
     train:
-      target: mug.data.dataset.OsuTrainDataset
+      target: mai.data.dataset.MaimaiTrainDataset
       params:
         mirror_p: 0.3
         mirror_at_interval_p: 0.2
@@ -74,14 +84,14 @@ data:
         rate: [ 0.75,1.5 ]
 
     validation:
-      target: mug.data.dataset.OsuValidDataset
+      target: mai.data.dataset.MaimaiValidDataset
       params: {}
 #        test_txt_file: "data\\mug\\local_mania_4k_test.txt"
 
 lightning:
   callbacks:
     beatmap_logger:
-      target: mug.data.dataset.BeatmapLogger
+      target: mai.data.dataset.BeatmapLogger
       params:
         log_batch_idx: [ 0 ]
         splits: [ 'val' ]

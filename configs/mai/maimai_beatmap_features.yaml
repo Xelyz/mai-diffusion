@@ -1,24 +1,21 @@
 - name: diff
   type: category
   category:
-    - Basic
-    - Advanced
-    - Expert
-    - Master
+    - EXPERT
+    - MASTER
     - Re:MASTER
 
 - name: style
   type: category
   category:
-    - Standard
+    - SD
     - DX
-    - Festival
 
 - name: slide_ratio
   type: numeric
   min: 0
   max: 0.5
-  interval: 0.05
+  interval: 0.01
 
 - name: keybr
   type: bool
@@ -31,6 +28,6 @@
 
 - name: cc
   type: numeric
-  min: 1
+  min: 12
   max: 15
   interval: 0.1

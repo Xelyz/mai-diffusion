@@ -1108,9 +1108,9 @@ if __name__ == "__main__":
                                 maptype_switch = gr.Checkbox(label="map type")
                                 slider_switch = gr.Checkbox(label="slide ratio")
                             with gr.Column(scale=3, min_width=100):
-                                mapType = gr.Radio(["Keyboard (Slide < 10%)", "Stars (Slide > 30%)",
-                                                    "Normal (10% < Slide < 30%)"],
-                                                    show_label=False, value="Normal (10% < Slide < 30%)",
+                                mapType = gr.Radio(["Keyboard (Slide < 10%)", "Stars (Slide > 25%)",
+                                                    "Normal (10% < Slide < 25%)"],
+                                                    show_label=False, value="Normal (10% < Slide < 25%)",
                                                     visible=False)
                                 slider = gr.Slider(0, 0.5, value=0.0, label="slide ratio", visible=False,
                                                 info="slide ratio of the map, 0 for notes only, 0.5 for FULL slide"
