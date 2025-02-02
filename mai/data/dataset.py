@@ -112,9 +112,9 @@ class MaimaiDataset(Dataset):
         
         slide_ratio = slide_count / total
         feature_dict['slide_ratio'] = slide_ratio
-        if slide_ratio <= 0.1:
+        if slide_ratio <= 0.08:
             feature_dict['keybr'] = 1
-        elif 0.1 < slide_ratio <= 0.25:
+        elif 0.08 < slide_ratio <= 0.2:
             feature_dict['normal'] = 1
         else:
             feature_dict['stars'] = 1

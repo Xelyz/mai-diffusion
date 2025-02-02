@@ -219,7 +219,7 @@ class MaimaiReconstructLoss(torch.nn.Module):
 
 class MaimaiRhythmReconstructLoss(torch.nn.Module):
 
-    def __init__(self, label_smoothing=0.0):
+    def __init__(self, label_smoothing=0.0, weight_start_offset=1.0, weight_holding=1.0, weight_end_offset=1.0):
         super(MaimaiRhythmReconstructLoss, self).__init__()
         self.weight_start_offset = weight_start_offset
         self.weight_holding = weight_holding
