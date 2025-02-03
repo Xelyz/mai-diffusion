@@ -21,6 +21,7 @@ from mai.data.convertor import *
 
 class MaimaiDataset(Dataset):
     def __init__(self,
+                 data_dir,
                  csv_file,
                  feature_yaml=None,
                  sr=22050,
@@ -46,7 +47,7 @@ class MaimaiDataset(Dataset):
         #     txt_file_paths = [txt_file]
         # else:
         #     txt_file_paths = txt_file
-        self.data_dir = '/Volumes/XelesteSSD/maiCharts/json'
+        self.data_dir = data_dir
 
         with open(csv_file, 'r') as file:
             # csv contains json file name of chart, preprocessed by majdata edit, and audio file name
