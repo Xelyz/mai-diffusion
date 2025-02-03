@@ -130,7 +130,7 @@ def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None,
             interval = obj.timeStampInBeats - prev
             if interval.count > 0:
                 if interval.divide != curr_divide:
-                    f.write(f'{'{'}{interval.divide}{'}'}')
+                    f.write(f"{'{'}{interval.divide}{'}'}")
                     curr_divide = interval.divide
                 f.write(f'{prev_content}')
                 f.write(',' * interval.count)
