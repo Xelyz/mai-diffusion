@@ -112,7 +112,7 @@ class AutoencoderKL(pl.LightningModule):
         loss, log_dict = self.step(batch, 'val', sample_posterior=False)
         self.log("val/loss", loss)
         self.log_dict(log_dict)
-        return self.log_dict
+        return log_dict
 
     def configure_optimizers(self):
         lr = self.learning_rate
