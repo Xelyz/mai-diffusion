@@ -24,7 +24,3 @@ pip install --upgrade -q pip setuptools wheel
 
 echo "Installing required packages..."
 pip install -q -r requirements.txt
-
-# Run the Python script
-echo "Running webui.py..."
-python webui.py

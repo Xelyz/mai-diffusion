@@ -5,7 +5,7 @@ model:
   init_args:
     # Main model parameters
     learning_rate: 0.0001
-    monitor: "val/loss"
+    monitor: "val_loss"
     kl_weight: 0.00001
 
     # Loss configuration
@@ -45,6 +45,7 @@ data:
     num_workers: 2
     common_params:
       data_dir: "/content/drive/My Drive/exchange/json"
+      # data_dir: "/Volumes/XelesteSSD/maiCharts/json"
       csv_file: "data/songs.csv"
       sr: 22050
       n_fft: 512
