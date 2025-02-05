@@ -110,7 +110,7 @@ class AutoencoderKL(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, log_dict = self.step(batch, 'val', sample_posterior=False)
-        self.log("val/loss", loss)
+        self.log("val_loss", loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
         self.log_dict(log_dict)
         return log_dict
 
