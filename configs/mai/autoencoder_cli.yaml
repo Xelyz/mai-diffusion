@@ -31,8 +31,8 @@ model:
     # Model architecture configuration
     ddconfig:
       x_channels: 182  # sum of all features
-      middle_channels: 64
-      z_channels: 32
+      middle_channels: 256
+      z_channels: 64
       num_groups: 16
       channel_mult: [1, 2, 4, 4]  # num_down = len(ch_mult)-1
       num_res_blocks: 2
