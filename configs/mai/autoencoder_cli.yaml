@@ -40,7 +40,7 @@ model:
 data:
   class_path: MAI.DataModuleFromConfig
   init_args:
-    batch_size: 16
+    batch_size: 10
     wrap: false
     num_workers: 2
     common_params:
