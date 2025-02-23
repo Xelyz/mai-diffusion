@@ -289,7 +289,6 @@ class MaimaiConvertor(BaseMaimaiConvertor):
         is_slide_head = note_dict["is_slide_head"]
         touch = note_dict["touch"]
         touch_offset = note_dict["touch_offset"]
-        is_hanabi = note_dict["is_hanabi"]
         touch_holding = note_dict["touch_holding"]
         touch_hold_end_offset = note_dict["touch_hold_end_offset"]
         slide_pass_through = note_dict["slide_pass_through"]
@@ -368,7 +367,7 @@ class MaimaiConvertor(BaseMaimaiConvertor):
         hit_object_with_start = sorted(hit_object_with_start, key=lambda x: x[1])
         return list(map(lambda x: x[0], hit_object_with_start))
 
-    def objects_to_array(self, hit_objects: dict) -> Tuple[np.ndarray, np.ndarray]:
+    def objects_to_array(self, hit_objects: dict, target=None) -> Tuple[np.ndarray, np.ndarray]:
         array_length = min(self.max_frame, int(self.max_frame / self.rate))
         tap = np.zeros((array_length, 8), dtype=np.float32)
         tap_offset = np.zeros((array_length, 8), dtype=np.float32)
@@ -379,7 +378,6 @@ class MaimaiConvertor(BaseMaimaiConvertor):
         is_slide_head = np.zeros((array_length, 8), dtype=np.float32)
         touch = np.zeros((array_length, 33), dtype=np.float32)
         touch_offset = np.zeros((array_length, 33), dtype=np.float32)
-        is_hanabi = np.zeros((array_length, 33), dtype=np.float32)
         touch_holding = np.zeros((array_length, 1), dtype=np.float32)
         touch_hold_end_offset = np.zeros((array_length, 1), dtype=np.float32)
         slide_pass_through = np.zeros((array_length, 17), dtype=np.float32)
@@ -486,9 +484,6 @@ class MaimaiConvertor(BaseMaimaiConvertor):
                     touch_id = Touch(touch_area, position + 1).get_id()
                     touch[start_index, touch_id] = 1
                     touch_offset[start_index, touch_id] = start_offset
-
-                    if note.get('isHanabi', False):
-                        is_hanabi[start_index, touch_id] = 1
                 # touch hold
                 elif noteType == 4:
                     assert note.get("touchArea", '') == 'C', "Touch Hold must be in C Area"
@@ -496,9 +491,6 @@ class MaimaiConvertor(BaseMaimaiConvertor):
                     
                     touch[start_index, touch_id] = 1
                     touch_offset[start_index, touch_id] = start_offset
-
-                    if note.get('isHanabi', False):
-                        is_hanabi[start_index, touch_id] = 1
 
                     end, end_index, end_offset = self.read_time(timestamp + note.get("holdTime", 0))
                     if end_index >= array_length:
@@ -516,22 +508,32 @@ class MaimaiConvertor(BaseMaimaiConvertor):
 
             max_index = max(start_index, max_index)
 
-        array = np.hstack([
-            tap,                    # 8
-            tap_offset,            # 8
-            is_holding,            # 8
-            hold_end_offset,       # 8
-            is_break,              # 8
-            is_ex,                 # 8
-            is_slide_head,         # 8
-            touch,               # 33
-            touch_offset,          # 33
-            is_hanabi,             # 33
-            touch_holding,         # 1
-            touch_hold_end_offset, # 1
-            slide_pass_through,    # 17
-            slide_end_offset       # 8
-        ])
+        if target == "tap":
+            array = np.hstack([
+                tap,                    # 8
+                tap_offset,            # 8
+                is_holding,            # 8
+                hold_end_offset,       # 8
+                is_break,              # 8
+                is_ex,                 # 8
+                is_slide_head          # 8
+            ])
+        else:
+            array = np.hstack([
+                tap,                    # 8
+                tap_offset,            # 8
+                is_holding,            # 8
+                hold_end_offset,       # 8
+                is_break,              # 8
+                is_ex,                 # 8
+                is_slide_head,          # 8
+                touch,               # 33
+                touch_offset,          # 33
+                touch_holding,         # 1
+                touch_hold_end_offset, # 1
+                slide_pass_through,    # 17
+                slide_end_offset       # 8
+            ])
 
         if len(array) < self.max_frame:
             array = np.concatenate([

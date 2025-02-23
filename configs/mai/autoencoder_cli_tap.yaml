@@ -1,0 +1,85 @@
+# Modified autoencoder.yaml for Lightning CLI compatibility
+
+model:
+  class_path: mai.firststage.autoencoder.AutoencoderKL
+  init_args:
+    # Main model parameters
+    learning_rate: 0.0001
+    monitor: "val/loss"
+    kl_weight: 0.0001
+
+    # Loss configuration
+    lossconfig:
+      target: mai.firststage.losses.MaimaiTapReconstructLoss
+      params:
+        weight_tap: 1.0
+        weight_start_offset: 0.5
+        weight_holding: 0.5
+        weight_end_offset: 0.2
+        weight_break: 0.3
+        weight_ex: 0.3
+        label_smoothing: 0.001
+
+    # Model architecture configuration
+    ddconfig:
+      x_channels: 56  # sum of all features
+      middle_channels: 256
+      z_channels: 32
+      num_groups: 16
+      channel_mult: [1, 2, 4, 4]  # num_down = len(ch_mult)-1
+      num_res_blocks: 2
+
+data:
+  class_path: MAI.DataModuleFromConfig
+  init_args:
+    batch_size: 32
+    wrap: false
+    num_workers: 2
+    common_params:
+      data_dir: "/content/drive/My Drive/exchange/json"
+      # data_dir: "/Volumes/XelesteSSD/maiCharts/json"
+      csv_file: "data/songs.csv"
+      sr: 22050
+      n_fft: 512
+      max_audio_frame: 32768
+      audio_note_window_ratio: 8
+      n_mels: 128
+      cache_dir: "data/audio_cache/"
+      target: "tap"
+      with_audio: false
+      with_feature: false
+      feature_yaml: "configs/mai/maimai_beatmap_features.yaml"
+    train:
+      target: mai.data.dataset.MaimaiTrainDataset
+      params:
+        mirror_p: 0.3
+        shift_p: 0.1
+        rate: [0.75, 1.5]
+    validation:
+      target: mai.data.dataset.MaimaiValidDataset
+      params: {}
+      # 这里如果写class_path和init_args会报错。程序会把validation解释成NameSpace而不是dict。原因不知，我太菜了
+
+trainer:
+  accelerator: 'auto'
+  devices: 1
+  benchmark: true
+  max_epochs: 100
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 20
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        dirpath: "checkpoints"
+        filename: "model_TAP_{epoch:03d}"
+        save_top_k: -1
+        every_n_epochs: 5
+        monitor: "val/loss"
+    - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: "step"
+    - class_path: mai.data.dataset.BeatmapLogger
+      init_args:
+        log_batch_idx: [0]
+        splits: ["val"]
+        count: 16

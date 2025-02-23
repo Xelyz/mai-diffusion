@@ -40,7 +40,8 @@ class MaimaiDataset(Dataset):
                  test_csv_file=None,
                  with_audio=False,
                  with_feature=False,
-                 cache_dir=None
+                 cache_dir=None,
+                 target=None
                  ):
         # self.data_paths = txt_file
         # if isinstance(txt_file, str):
@@ -88,6 +89,7 @@ class MaimaiDataset(Dataset):
         self.n_fft = n_fft
         self.max_duration = self.audio_frame_duration * max_audio_frame
         self.cache_dir = cache_dir
+        self.target = target
         self.error_files = []
         if cache_dir is not None:
             os.makedirs(cache_dir, exist_ok=True)
@@ -150,7 +152,7 @@ class MaimaiDataset(Dataset):
                                                                   convertor_params["frame_ms"] / 2))
         try:
             objs, beatmap_meta = get_maimai_data(chart_path, audio_path, song_data, convertor_params)
-            obj_array, valid_flag = beatmap_meta.convertor.objects_to_array(objs)
+            obj_array, valid_flag = beatmap_meta.convertor.objects_to_array(objs, self.target)
             example = {
                 "meta": beatmap_meta.for_batch(),
                 "convertor": convertor_params,
