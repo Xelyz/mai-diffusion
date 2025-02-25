@@ -13,6 +13,8 @@ packaging
 eyed3
 requests
 pytorch_lightning
+torchvision
+opencv_python
 gradio
 reamber
 opt-einsum
