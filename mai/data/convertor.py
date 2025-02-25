@@ -8,7 +8,8 @@ import string
 import json
 sys.path.append(os.getcwd())
 
-from mai.data.utils import Touch, get_slide_path, HitObject, gridify, Beats
+from mai.data.utils import Touch, get_slide_path, HitObject, Beats
+from mug.data.utils import gridify
 
 import numpy as np
 
@@ -19,7 +20,7 @@ class BeatmapMeta:
     chart: str = ""
     audio: str = ""
     features: dict = field(default_factory=lambda: {})
-    convertor: 'BaseMaimaiConvertor' = None
+    convertor: 'MaimaiConvertor' = None
     timing_points: List[str] = field(default_factory=lambda: [])
 
     def for_batch(self):
@@ -27,15 +28,6 @@ class BeatmapMeta:
                                                       for (k, v) in x
                                                       if k != 'convertor' and k != 'file_meta' and k != 'timing_points'})
         return result
-
-
-def read_item(line):
-    return line.split(":")[-1].strip()
-
-valid_chars = "-_.()[]/\\' %s%s" % (string.ascii_letters, string.digits)
-
-def slugify(text):
-    return "".join(c for c in text if c in valid_chars)
 
 def get_maimai_data(chart_path, audio_path, song_data, convertor_params: Optional[dict]) -> Tuple[dict, BeatmapMeta]:
     with open(chart_path, 'r') as file:
@@ -52,49 +44,6 @@ def get_maimai_data(chart_path, audio_path, song_data, convertor_params: Optiona
         meta.convertor = MaimaiConvertor(**convertor_params)
 
     return data, meta
-    # for line in data:
-    #     line = line.strip()
-
-    #     if parsing_context == "[HitObjects]" and "," in line:
-    #         hit_objects.append(line)
-    #     elif parsing_context == "[TimingPoints]" and "," in line:
-    #         meta.file_meta.append(line)
-    #         meta.timing_points.append(line)
-    #     else:
-    #         if line != "[HitObjects]":
-    #             meta.file_meta.append(line)
-
-    #         if parsing_context == "[General]":
-    #             if line.startswith("AudioFilename"):
-    #                 audio_item = read_item(line)
-    #                 meta.audio = os.path.join(os.path.dirname(osu_path),
-    #                                           audio_item)
-    #                 if not os.path.isfile(meta.audio):
-    #                     meta.audio = os.path.join(os.path.dirname(osu_path),
-    #                                               slugify(audio_item))
-    #                     if not os.path.isfile(meta.audio):
-    #                         meta.audio = os.path.join(
-    #                             os.path.dirname(meta.audio),
-    #                             audio_item.lower()
-    #                         )
-    #                         if not os.path.isfile(meta.audio):
-    #                             meta.audio = os.path.join(
-    #                                 os.path.dirname(meta.audio),
-    #                                 slugify(audio_item.lower())
-    #                             )
-
-    #         elif parsing_context == "[Metadata]":
-    #             if line.startswith("Version"):
-    #                 meta.version = read_item(line)
-    #             elif line.startswith("BeatmapSetID"):
-    #                 meta.set_id = int(read_item(line))
-
-    #         elif parsing_context == "[Difficulty]":
-    #             if line.startswith("CircleSize"):
-    #                 meta.cs = float(read_item(line))
-
-    #     if line.startswith("["):
-    #         parsing_context = line
 
 def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None,
                   gridify=None):
@@ -149,8 +98,92 @@ def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None,
 
     print(f"Succesfully saved to {path}")
 
-class BaseMaimaiConvertor(metaclass=ABCMeta):
+# class BaseMaimaiConvertor(metaclass=ABCMeta):
 
+#     def read_time(self, time):
+#         t = time * 1000 / self.rate + self.offset_ms
+#         index = int(t / self.frame_ms)
+#         offset = (t - index * self.frame_ms) / self.frame_ms
+#         return int(round(t)), index, offset
+
+#     def __init__(self, frame_ms, max_frame, mirror=False, from_logits=False, offset_ms=0,
+#                 rate=1.0):
+#         self.frame_ms = frame_ms
+#         self.max_frame = max_frame
+#         self.mirror = mirror
+#         self.from_logits = from_logits
+#         self.offset_ms = offset_ms
+#         self.rate = rate
+
+
+#     @abstractmethod
+#     def objects_to_array(self, hit_objects: List[HitObject]) -> Tuple[np.ndarray, np.ndarray]: pass
+
+#     @abstractmethod
+#     def array_to_objects(self, note_array: np.ndarray) -> List[HitObject]: pass
+
+
+#     def timing_to_array(self, meta: BeatmapMeta) -> Tuple[np.ndarray, bool]:
+#         if len(meta.timing_points) == 0:
+#             return [None, False]
+
+#         red_lines = [] # (st, bpm)
+#         segment_list = [] # (st, visual_bpm, true_bpm)
+#         last_true_bpm = None
+
+#         for line in meta.timing_points:
+#             time_ms, timing = line.split(",")[:2]
+#             timing = float(timing)
+#             time_ms = float(time_ms)
+#             if timing < 0: # green line
+#                 true_bpm = last_true_bpm * 100 / -timing
+#             else: # red lines
+#                 true_bpm = 60000 / timing
+#                 last_true_bpm = true_bpm
+#                 if len(red_lines) == 0 or red_lines[-1][1] != true_bpm:
+#                     red_lines.append((time_ms, true_bpm))
+#             segment_list.append((time_ms, true_bpm, last_true_bpm))
+
+#         # detech visual sv
+#         cur_bpm = None
+#         has_sv = False
+#         if len(red_lines) > 1:
+#             for i in range(len(segment_list) - 1):
+#                 if abs(segment_list[i][0] - segment_list[i + 1][0]) <= 1:
+#                     continue
+#                 if cur_bpm is None:
+#                     cur_bpm = segment_list[i][1]
+#                 else:
+#                     if abs(cur_bpm - segment_list[i][1]) > 0.00001:
+#                         has_sv = True
+#                         break
+
+#         # generate beat array
+#         array_length = min(self.max_frame, int(self.max_frame / self.rate))
+#         array = np.zeros((array_length, 2), dtype=np.float32)
+#         for i, (start_time_ms, true_bpm, _) in enumerate(segment_list):
+
+#             while true_bpm < 150:
+#                 true_bpm = true_bpm * 2
+#             while true_bpm >= 300:
+#                 true_bpm = true_bpm / 2
+    
+#             if i == len(segment_list) - 1:
+#                 end_time_ms = self.frame_ms * self.max_frame
+#             else:
+#                 end_time_ms = segment_list[i + 1][0]
+#             beat_ms = start_time_ms
+#             while beat_ms <= end_time_ms:
+#                 _, idx, offset = self.read_time(beat_ms)
+#                 if idx >= array_length:
+#                     continue
+#                 array[idx, 0] = 1
+#                 array[idx, 1] = offset
+#                 beat_ms += 60000 / true_bpm / 2
+        
+#         return array, has_sv
+
+class MaimaiConvertor():
     def read_time(self, time):
         t = time * 1000 / self.rate + self.offset_ms
         index = int(t / self.frame_ms)
@@ -166,75 +199,6 @@ class BaseMaimaiConvertor(metaclass=ABCMeta):
         self.offset_ms = offset_ms
         self.rate = rate
 
-
-    @abstractmethod
-    def objects_to_array(self, hit_objects: List[HitObject]) -> Tuple[np.ndarray, np.ndarray]: pass
-
-    @abstractmethod
-    def array_to_objects(self, note_array: np.ndarray) -> List[HitObject]: pass
-
-
-    def timing_to_array(self, meta: BeatmapMeta) -> Tuple[np.ndarray, bool]:
-        if len(meta.timing_points) == 0:
-            return [None, False]
-
-        red_lines = [] # (st, bpm)
-        segment_list = [] # (st, visual_bpm, true_bpm)
-        last_true_bpm = None
-
-        for line in meta.timing_points:
-            time_ms, timing = line.split(",")[:2]
-            timing = float(timing)
-            time_ms = float(time_ms)
-            if timing < 0: # green line
-                true_bpm = last_true_bpm * 100 / -timing
-            else: # red lines
-                true_bpm = 60000 / timing
-                last_true_bpm = true_bpm
-                if len(red_lines) == 0 or red_lines[-1][1] != true_bpm:
-                    red_lines.append((time_ms, true_bpm))
-            segment_list.append((time_ms, true_bpm, last_true_bpm))
-
-        # detech visual sv
-        cur_bpm = None
-        has_sv = False
-        if len(red_lines) > 1:
-            for i in range(len(segment_list) - 1):
-                if abs(segment_list[i][0] - segment_list[i + 1][0]) <= 1:
-                    continue
-                if cur_bpm is None:
-                    cur_bpm = segment_list[i][1]
-                else:
-                    if abs(cur_bpm - segment_list[i][1]) > 0.00001:
-                        has_sv = True
-                        break
-
-        # generate beat array
-        array_length = min(self.max_frame, int(self.max_frame / self.rate))
-        array = np.zeros((array_length, 2), dtype=np.float32)
-        for i, (start_time_ms, true_bpm, _) in enumerate(segment_list):
-
-            while true_bpm < 150:
-                true_bpm = true_bpm * 2
-            while true_bpm >= 300:
-                true_bpm = true_bpm / 2
-    
-            if i == len(segment_list) - 1:
-                end_time_ms = self.frame_ms * self.max_frame
-            else:
-                end_time_ms = segment_list[i + 1][0]
-            beat_ms = start_time_ms
-            while beat_ms <= end_time_ms:
-                _, idx, offset = self.read_time(beat_ms)
-                if idx >= array_length:
-                    continue
-                array[idx, 0] = 1
-                array[idx, 1] = offset
-                beat_ms += 60000 / true_bpm / 2
-        
-        return array, has_sv
-
-class MaimaiConvertor(BaseMaimaiConvertor):
     def is_binary_positive(self, input):
         if self.from_logits:
             return input > 0
@@ -362,7 +326,6 @@ class MaimaiConvertor(BaseMaimaiConvertor):
                     obj.touchArea = Touch.from_id(touch_id)
                     obj.noteType = 4
                     obj.holdTime = (end - start)
-                obj.isHanabi = self.is_binary_positive(is_hanabi[start_index, touch_id])
                 hit_object_with_start.append((obj, start))
         hit_object_with_start = sorted(hit_object_with_start, key=lambda x: x[1])
         return list(map(lambda x: x[0], hit_object_with_start))

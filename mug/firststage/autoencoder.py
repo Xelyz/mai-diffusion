@@ -14,6 +14,7 @@ class AutoencoderKL(pl.LightningModule):
     def __init__(self,
                  ddconfig,
                  lossconfig,
+                 learning_rate=1e-3,
                  ckpt_path=None,
                  remove_prefix=None,
                  ignore_keys=None,
@@ -26,6 +27,7 @@ class AutoencoderKL(pl.LightningModule):
         super().__init__()
         if ignore_keys is None:
             ignore_keys = []
+        self.learning_rate = learning_rate
         self.encoder = Encoder(**ddconfig)
         self.decoder = Decoder(**ddconfig)
         self.loss = instantiate_from_config(lossconfig)
@@ -110,7 +112,7 @@ class AutoencoderKL(pl.LightningModule):
         loss, log_dict = self.step(batch, 'val', sample_posterior=False)
         self.log("val/loss", loss)
         self.log_dict(log_dict)
-        return self.log_dict
+        return log_dict
 
     def configure_optimizers(self):
         lr = self.learning_rate

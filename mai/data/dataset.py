@@ -16,7 +16,7 @@ import os
 import csv
 sys.path.append(os.getcwd())
 
-from mai import util
+from mug import util
 from mai.data.convertor import *
 
 class MaimaiDataset(Dataset):
@@ -215,16 +215,13 @@ class MaimaiDataset(Dataset):
 
 
 class MaimaiTrainDataset(MaimaiDataset):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def filter_beatmap_paths(self, beatmap_paths):
         return beatmap_paths[:int(len(beatmap_paths) * 0.9)]
 
-
 class MaimaiValidDataset(MaimaiDataset):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
