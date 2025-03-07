@@ -16,13 +16,11 @@ model:
         weight_start_offset: 0.5
         weight_holding: 0.5
         weight_end_offset: 0.2
-        weight_break: 0.3
-        weight_ex: 0.3
         label_smoothing: 0.001
 
     # Model architecture configuration
     ddconfig:
-      x_channels: 56  # sum of all features
+      x_channels: 32  # sum of all features
       middle_channels: 256
       z_channels: 32
       num_groups: 16

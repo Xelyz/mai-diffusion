@@ -227,9 +227,6 @@ class MaimaiConvertor():
             'tap_offset': 8,
             'is_holding': 8,
             'hold_end_offset': 8,
-            'is_break': 8,
-            'is_ex': 8,
-            'is_slide_head': 8,
             'touch': 33,
             'touch_offset': 33,
             'is_hanabi': 33,
@@ -248,9 +245,6 @@ class MaimaiConvertor():
         tap_offset = note_dict["tap_offset"]
         is_holding = note_dict["is_holding"]
         hold_end_offset = note_dict["hold_end_offset"]
-        is_break = note_dict["is_break"]
-        is_ex = note_dict["is_ex"]
-        is_slide_head = note_dict["is_slide_head"]
         touch = note_dict["touch"]
         touch_offset = note_dict["touch_offset"]
         touch_holding = note_dict["touch_holding"]
@@ -290,8 +284,6 @@ class MaimaiConvertor():
                     obj.startPosition = position + 1
                     obj.noteType = 2
                     obj.holdTime = (end - start)
-                obj.isBreak = self.is_binary_positive(is_break[start_index, position])
-                obj.isEx = self.is_binary_positive(is_ex[start_index, position])
                 hit_object_with_start.append((obj, start))
 
         touch_count = 33
@@ -336,9 +328,6 @@ class MaimaiConvertor():
         tap_offset = np.zeros((array_length, 8), dtype=np.float32)
         is_holding = np.zeros((array_length, 8), dtype=np.float32)
         hold_end_offset = np.zeros((array_length, 8), dtype=np.float32)
-        is_break = np.zeros((array_length, 8), dtype=np.float32)
-        is_ex = np.zeros((array_length, 8), dtype=np.float32)
-        is_slide_head = np.zeros((array_length, 8), dtype=np.float32)
         touch = np.zeros((array_length, 33), dtype=np.float32)
         touch_offset = np.zeros((array_length, 33), dtype=np.float32)
         touch_holding = np.zeros((array_length, 1), dtype=np.float32)
@@ -375,7 +364,6 @@ class MaimaiConvertor():
                     if not note["isSlideNoHead"]:
                         tap[start_index, position] = 1
                         tap_offset[start_index, position] = start_offset
-                        is_slide_head[start_index, position] = 1
 
                     slide_path = get_slide_path(note.get('noteContent', ''))
                     
@@ -464,11 +452,6 @@ class MaimaiConvertor():
                     touch_hold_end_offset[end_index, 0] = end_offset
                     max_index = max(end_index, max_index)
 
-                if note.get('isBreak', False):
-                    is_break[start_index, position] = 1
-                if note.get('isEx', False):
-                    is_ex[start_index, position] = 1
-
             max_index = max(start_index, max_index)
 
         if target == "tap":
@@ -477,9 +460,6 @@ class MaimaiConvertor():
                 tap_offset,            # 8
                 is_holding,            # 8
                 hold_end_offset,       # 8
-                is_break,              # 8
-                is_ex,                 # 8
-                is_slide_head          # 8
             ])
         else:
             array = np.hstack([
@@ -487,9 +467,6 @@ class MaimaiConvertor():
                 tap_offset,            # 8
                 is_holding,            # 8
                 hold_end_offset,       # 8
-                is_break,              # 8
-                is_ex,                 # 8
-                is_slide_head,          # 8
                 touch,               # 33
                 touch_offset,          # 33
                 touch_holding,         # 1

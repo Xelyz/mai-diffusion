@@ -85,9 +85,6 @@ class MaimaiReconstructLoss(torch.nn.Module):
             'tap_offset': 8,
             'is_holding': 8,
             'hold_end_offset': 8,
-            'is_break': 8,
-            'is_ex': 8,
-            'is_slide_head': 8,
             'touch': 33,
             'touch_offset': 33,
             'touch_holding': 1,
@@ -119,15 +116,6 @@ class MaimaiReconstructLoss(torch.nn.Module):
         offset_end_loss = self.get_key_loss(input_dict['hold_end_offset'], recon_dict['hold_end_offset'],
                                             valid_flag * is_end,
                                             self.mse_loss)
-        break_loss = self.get_key_loss(input_dict['is_break'], recon_dict['is_break'], 
-                                       valid_flag * is_start,
-                                       self.label_smoothing_bce_loss)
-        ex_loss = self.get_key_loss(input_dict['is_ex'], recon_dict['is_ex'],
-                                    valid_flag * is_start,
-                                    self.label_smoothing_bce_loss)
-        slide_head_loss = self.get_key_loss(input_dict['is_slide_head'], recon_dict['is_slide_head'],
-                                    valid_flag * is_start,
-                                    self.label_smoothing_bce_loss)
         
         is_touch_start = input_dict['touch']  # [B, K, T]
         touch_holding_pad = torch.nn.functional.pad(input_dict['touch_holding'], (0, 1))  # [B, K, T + 1]
@@ -165,17 +153,11 @@ class MaimaiReconstructLoss(torch.nn.Module):
         acc_ln_touch_start, precision_ln_touch_start, recall_ln_touch_start = self.classification_metrics(
             input_dict['touch_holding'], recon_dict['touch_holding'], valid_flag
         )
-        acc_slide_head, precision_slide_head, recall_slide_head = self.classification_metrics(
-            input_dict['is_slide_head'], recon_dict['is_slide_head'], valid_flag * is_start
-        )
 
         loss = (start_loss * self.weight_tap +
                 offset_start_loss * self.weight_start_offset +
                 holding_loss * self.weight_holding +
                 offset_end_loss * self.weight_end_offset + 
-                break_loss * self.weight_break +
-                ex_loss * self.weight_ex +
-                slide_head_loss * self.weight_slide_head +
                 touch_loss * self.weight_touch +
                 touch_offset_loss * self.weight_touch_offset +
                 hanabi_loss * self.weight_hanabi +
@@ -189,9 +171,6 @@ class MaimaiReconstructLoss(torch.nn.Module):
             'offset_start_loss': offset_start_loss.detach().item(),
             'holding_loss': holding_loss.detach().item(),
             'offset_end_loss': offset_end_loss.detach().item(),
-            'break_loss': break_loss.detach().item(),
-            'ex_loss': ex_loss.detach().item(),
-            'slide_head_loss': slide_head_loss.detach().item(),
             'touch_loss': touch_loss.detach().item(),
             'touch_offset_loss': touch_offset_loss.detach().item(),
             'hanabi_loss': hanabi_loss.detach().item(),
@@ -203,30 +182,24 @@ class MaimaiReconstructLoss(torch.nn.Module):
             "acc_ln": acc_ln_start,
             "acc_touch": acc_touch_start,
             "acc_ln_touch": acc_ln_touch_start,
-            "acc_slide_head": acc_slide_head,
             "precision_rice": precision_start,
             "precision_ln": precision_ln_start,
             "precision_touch": precision_touch_start,
             "precision_ln_touch": precision_ln_touch_start,
-            "precision_slide_head": precision_slide_head,
             "recall_rice": recall_start,
             "recall_ln": recall_ln_start,
             "recall_touch": recall_touch_start,
             "recall_ln_touch": recall_ln_touch_start,
-            "recall_slide_head": recall_slide_head
         }
     
 class MaimaiTapReconstructLoss(torch.nn.Module):
-    def __init__(self, weight_tap=1.0, weight_start_offset=1.0, weight_holding=1.0, weight_end_offset=1.0, weight_break=1.0, weight_ex=1.0, weight_slide_head=1.0,
+    def __init__(self, weight_tap=1.0, weight_start_offset=1.0, weight_holding=1.0, weight_end_offset=1.0,
                  label_smoothing=0.0, gamma=2.0):
         super(MaimaiTapReconstructLoss, self).__init__()
         self.weight_tap = weight_tap
         self.weight_start_offset = weight_start_offset
         self.weight_holding = weight_holding
         self.weight_end_offset = weight_end_offset
-        self.weight_break = weight_break
-        self.weight_ex = weight_ex
-        self.weight_slide_head = weight_slide_head
         self.bce_loss = torch.nn.BCEWithLogitsLoss(reduction='none')
         self.mse_loss = torch.nn.MSELoss(reduction='none')
         self.label_smoothing = label_smoothing
@@ -291,7 +264,6 @@ class MaimaiTapReconstructLoss(torch.nn.Module):
             'hold_end_offset': 8,
             'is_break': 8,
             'is_ex': 8,
-            'is_slide_head': 8,
         }
         # 计算分割点
         split_indices = np.cumsum(list(lengths.values()))[:-1]
@@ -323,9 +295,6 @@ class MaimaiTapReconstructLoss(torch.nn.Module):
         ex_loss = self.get_key_loss(input_dict['is_ex'], recon_dict['is_ex'],
                                     valid_flag * is_start,
                                     self.label_smoothing_bce_loss)
-        slide_head_loss = self.get_key_loss(input_dict['is_slide_head'], recon_dict['is_slide_head'],
-                                    valid_flag * is_start,
-                                    self.label_smoothing_bce_loss)
 
         acc_start, precision_start, recall_start = self.classification_metrics(
             input_dict['tap'], recon_dict['tap'], valid_flag
@@ -333,17 +302,13 @@ class MaimaiTapReconstructLoss(torch.nn.Module):
         acc_ln_start, precision_ln_start, recall_ln_start = self.classification_metrics(
             input_dict['is_holding'], recon_dict['is_holding'], valid_flag
         )
-        acc_slide_head, precision_slide_head, recall_slide_head = self.classification_metrics(
-            input_dict['is_slide_head'], recon_dict['is_slide_head'], valid_flag * is_start
-        )
 
         loss = (start_loss * self.weight_tap +
                 offset_start_loss * self.weight_start_offset +
                 holding_loss * self.weight_holding +
                 offset_end_loss * self.weight_end_offset + 
                 break_loss * self.weight_break +
-                ex_loss * self.weight_ex +
-                slide_head_loss * self.weight_slide_head)
+                ex_loss * self.weight_ex)
         
         return loss, {
             'loss': loss.detach().item(),
@@ -353,16 +318,12 @@ class MaimaiTapReconstructLoss(torch.nn.Module):
             'offset_end_loss': offset_end_loss.detach().item(),
             'break_loss': break_loss.detach().item(),
             'ex_loss': ex_loss.detach().item(),
-            'slide_head_loss': slide_head_loss.detach().item(),
             "acc_rice": acc_start,
             "acc_ln": acc_ln_start,
-            "acc_slide_head": acc_slide_head,
             "precision_rice": precision_start,
             "precision_ln": precision_ln_start,
-            "precision_slide_head": precision_slide_head,
             "recall_rice": recall_start,
             "recall_ln": recall_ln_start,
-            "recall_slide_head": recall_slide_head
         }
 
 if __name__ == '__main__':
@@ -371,14 +332,10 @@ if __name__ == '__main__':
         weight_start_offset=0.5,
         weight_holding=0.5,
         weight_end_offset=0.2,
-        weight_break=0.2,
-        weight_ex=0.3,
-        weight_slide_head=0.4,
         weight_touch=1.0,
         weight_touch_offset=0.5,
         weight_touch_holding=0.5,
         weight_touch_hold_end_offset=0.2,
-        weight_hanabi=0.1,
         weight_star_pass_through=0.5,
         weight_star_end_offset=0.3,
         label_smoothing=0.001,
