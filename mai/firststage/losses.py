@@ -262,8 +262,6 @@ class MaimaiTapReconstructLoss(torch.nn.Module):
             'tap_offset': 8,
             'is_holding': 8,
             'hold_end_offset': 8,
-            'is_break': 8,
-            'is_ex': 8,
         }
         # 计算分割点
         split_indices = np.cumsum(list(lengths.values()))[:-1]
@@ -289,12 +287,6 @@ class MaimaiTapReconstructLoss(torch.nn.Module):
         offset_end_loss = self.get_key_loss(input_dict['hold_end_offset'], recon_dict['hold_end_offset'],
                                             valid_flag * is_end,
                                             self.mse_loss)
-        break_loss = self.get_key_loss(input_dict['is_break'], recon_dict['is_break'], 
-                                       valid_flag * is_start,
-                                       self.label_smoothing_bce_loss)
-        ex_loss = self.get_key_loss(input_dict['is_ex'], recon_dict['is_ex'],
-                                    valid_flag * is_start,
-                                    self.label_smoothing_bce_loss)
 
         acc_start, precision_start, recall_start = self.classification_metrics(
             input_dict['tap'], recon_dict['tap'], valid_flag
@@ -306,18 +298,13 @@ class MaimaiTapReconstructLoss(torch.nn.Module):
         loss = (start_loss * self.weight_tap +
                 offset_start_loss * self.weight_start_offset +
                 holding_loss * self.weight_holding +
-                offset_end_loss * self.weight_end_offset + 
-                break_loss * self.weight_break +
-                ex_loss * self.weight_ex)
-        
+                offset_end_loss * self.weight_end_offset)        
         return loss, {
             'loss': loss.detach().item(),
             'start_loss': start_loss.detach().item(),
             'offset_start_loss': offset_start_loss.detach().item(),
             'holding_loss': holding_loss.detach().item(),
             'offset_end_loss': offset_end_loss.detach().item(),
-            'break_loss': break_loss.detach().item(),
-            'ex_loss': ex_loss.detach().item(),
             "acc_rice": acc_start,
             "acc_ln": acc_ln_start,
             "precision_rice": precision_start,
