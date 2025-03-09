@@ -30,7 +30,7 @@ model:
 data:
   class_path: main.DataModuleFromConfig
   init_args:
-    batch_size: 32
+    batch_size: 16
     wrap: false
     num_workers: 2
     common_params:
