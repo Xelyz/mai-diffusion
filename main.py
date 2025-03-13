@@ -1,4 +1,4 @@
-'''Step 2 Training Using pytorch_lightning CLI. Original one in main.py'''
+'''Step 1 Training Using pytorch_lightning CLI. Original one in main.py'''
 import librosa
 import argparse, os, sys, datetime, glob, importlib, csv
 import numpy as np
