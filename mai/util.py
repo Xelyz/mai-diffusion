@@ -1,6 +1,7 @@
 import importlib
 
 from mug.util import get_obj_from_str
+
 def instantiate_from_config(config):
     if isinstance(config, dict):
         if "class_path" in config:

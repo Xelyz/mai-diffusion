@@ -1,5 +1,7 @@
 import re
 import math
+from mug.data.utils import timing
+import numpy as np
 
 class Beats:
     def __init__(self, divide = 4, count = 0):
@@ -84,6 +86,24 @@ class HitObject:
     slideShape: str = " "
     startPosition: int = 0
     touchArea: Touch = Touch('C')
+
+    def __str__(self):
+        return str({
+            "timeStamp": self.timeStamp,
+            "timeStampInBeats": self.timeStampInBeats,
+            "holdTime": self.holdTime,
+            "holdTimeInBeats": self.holdTimeInBeats,
+            "isBreak": self.isBreak,
+            "isEx": self.isEx,
+            "isHanabi": self.isHanabi,
+            "isSlideNoHead": self.isSlideNoHead,
+            "noteType": self.noteType,
+            "slideStartTime": self.slideStartTime,
+            "slideTime": self.slideTime,
+            "slideShape": self.slideShape,
+            "startPosition": self.startPosition,
+            "touchArea": str(self.touchArea)
+        })
 
     def get_note_content(self):
         if self.noteType in [0, 1, 2]:
@@ -238,6 +258,38 @@ def get_slide_component_path(start, slide_shape, end):
                     new_path.append(touches)
             return new_path
     return [(touch * reflect + start - 1) % 8 + 1 for touch in path]
+
+epsilon = 10
+
+def gridify(hit_objects: list[HitObject], verbose=True):
+    times = []
+    for obj in hit_objects:
+        st, _, _ = parse_hit_objects(obj)
+        times.append(st)
+    times = np.asarray(times, dtype=np.float32)
+    bpm, offset = timing(times, verbose)
+
+    def format_time(t, _offset):
+        for div in [4, 8, 12, 16, 24, 32, 48, 64, 96]:
+            gap = 60 * 1000 / (bpm * div / 4)
+            meter = (t - _offset) / gap
+            meter_round = round(meter)
+            timing_error = abs(meter - meter_round)
+            if timing_error < epsilon / gap:
+                return str(int(meter_round * gap + _offset)), Beats(div, meter_round)
+        div = 256
+        gap = 60 * 1000 / (bpm * div / 4)
+        meter = (t - _offset) / gap
+        meter_round = round(meter)
+        return int(t), Beats(div, meter_round)
+
+    new_hit_objects = []
+    for obj in hit_objects:
+        obj.timeStamp, obj.timeStampInBeats = format_time(obj.timeStamp, offset)
+        if obj.noteType in [2, 4]:
+            obj.holdTime, obj.holdTimeInBeats = format_time(obj.holdTime, 0)
+        new_hit_objects.append(obj)
+    return bpm, offset, new_hit_objects
 
 if __name__ == "__main__":
     # print(','.join(map(str, get_slide_path('4-2w6'))))

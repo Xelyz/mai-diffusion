@@ -8,8 +8,7 @@ import string
 import json
 sys.path.append(os.getcwd())
 
-from mai.data.utils import Touch, get_slide_path, HitObject, Beats
-from mug.data.utils import gridify
+from mai.data.utils import Touch, get_slide_path, HitObject, Beats, gridify
 
 import numpy as np
 
@@ -36,17 +35,18 @@ def get_maimai_data(chart_path, audio_path, song_data, convertor_params: Optiona
     meta = BeatmapMeta()
     meta.chart = chart_path
     meta.audio = audio_path
-    meta.name = song_data['name']
     features_keys = ['style', 'diff', 'cc']
-    meta.features = {key: song_data[key] for key in features_keys if key in song_data}
+
+    if song_data is not None:
+        meta.name = song_data['name']
+        meta.features = {key: song_data[key] for key in features_keys if key in song_data}
 
     if convertor_params is not None:
         meta.convertor = MaimaiConvertor(**convertor_params)
 
     return data, meta
 
-def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None,
-                  gridify=None):
+def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None):
     convertor = meta.convertor
     hit_objects = convertor.array_to_objects(note_array)
     try:
@@ -56,6 +56,9 @@ def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None,
         traceback.print_exc()
         bpm = 120
         offset = 0
+
+    for i in hit_objects[:10]:
+        print(i)
 
     with open(path, "w", encoding='utf8') as f:
         # for line in meta.file_meta:
@@ -69,7 +72,7 @@ def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None,
         # if gridify is not None:
         #     f.write(f"[TimingPoints]\n{offset},{60000 / bpm},4,2,1,20,1,0\n\n")
         f.write(f"&first={offset / 1000}\n")
-        f.write(f"&inote_5=({bpm})\n")
+        f.write(f"&inote_5=({bpm:.3f})\n")
 
         prev = Beats()
         prev_content = ''
@@ -89,7 +92,8 @@ def save_maimai_file(meta: BeatmapMeta, note_array: np.ndarray, path=None,
                 if first:
                     prev = obj.timeStampInBeats
                     prev_content = obj.get_note_content()
-                prev_content += f'/{obj.get_note_content()}'
+                else:
+                    prev_content += f'/{obj.get_note_content()}'
 
             first = False
             
@@ -502,5 +506,4 @@ if __name__ == "__main__":
     
     save_maimai_file(beatmap_meta,
                   beatmap_meta.convertor.objects_to_array(objs)[0],
-                  os.path.join("/Volumes/XelesteSSD", "maidata.txt"),
-                  gridify)
+                  os.path.join("/Volumes/XelesteSSD", "maidata.txt"))
