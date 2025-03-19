@@ -34,7 +34,7 @@ model:
       num_res_blocks: 3
 
 data:
-  class_path: MAI.DataModuleFromConfig
+  class_path: main.DataModuleFromConfig
   init_args:
     batch_size: 10
     wrap: false
