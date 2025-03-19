@@ -1,7 +1,7 @@
 # Modified autoencoder.yaml for Lightning CLI compatibility
 
 model:
-  class_path: mai.firststage.autoencoder.AutoencoderKL
+  class_path: mug.firststage.autoencoder.AutoencoderKL
   init_args:
     # Main model parameters
     learning_rate: 0.0001
