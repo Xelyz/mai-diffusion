@@ -18,5 +18,4 @@ opencv_python
 gradio
 reamber
 opt-einsum
-scripts/MinaCalc-1.0.tar.gz
 jsonargparse[signatures]>=4.27.7
