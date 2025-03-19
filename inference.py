@@ -13,7 +13,7 @@ model_config = config['model']
 model = instantiate_from_config(model_config)
 
 # Load model from checkpoint
-ckpt_path = 'models/ckpt/model_TAP_epoch=038.ckpt'
+ckpt_path = 'models/ckpt/model_TAP_epoch=056.ckpt'
 model.init_from_ckpt(ckpt_path)
 
 # Set model to evaluation mode
@@ -30,7 +30,7 @@ converter_params = {
 }
 
 # Load single chart file
-chart_path = "/Volumes/XelesteSSD/maiCharts/json/Cryst/真千年女王/EXPERT.json"  # Replace with your chart path
+chart_path = "/Volumes/XelesteSSD/maiCharts/json/Cryst/Singularity/MASTER.json"  # Replace with your chart path
 song_data = None  # Optional song metadata
 data, meta = get_maimai_data(chart_path, None, song_data, converter_params)
 obj_array, valid_flag = meta.convertor.objects_to_array(data, "tap")

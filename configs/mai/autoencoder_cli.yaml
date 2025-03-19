@@ -13,29 +13,25 @@ model:
       target: mai.firststage.losses.MaimaiReconstructLoss
       params:
         weight_tap: 1.0
-        weight_start_offset: 0.5
-        weight_holding: 0.5
-        weight_end_offset: 0.2
-        weight_break: 0.3
-        weight_ex: 0.3
-        weight_slide_head: 0.7
-        weight_touch: 0.4
-        weight_touch_offset: 0.4
-        weight_touch_holding: 0.3
+        weight_start_offset: 0.4
+        weight_holding: 0.8
+        weight_end_offset: 0.3
+        weight_touch: 0.6
+        weight_touch_offset: 0.2
+        weight_touch_holding: 0.6
         weight_touch_hold_end_offset: 0.2
-        weight_hanabi: 0.1
-        weight_star_pass_through: 0.3
-        weight_star_end_offset: 0.4
-        label_smoothing: 0.001
+        weight_star_pass_through: 0.7
+        weight_star_end_offset: 0.1
+        label_smoothing: 0.01
 
     # Model architecture configuration
     ddconfig:
-      x_channels: 182  # sum of all features
-      middle_channels: 512
-      z_channels: 256
+      x_channels: 125  # sum of all features
+      middle_channels: 256
+      z_channels: 128
       num_groups: 16
-      channel_mult: [1, 2, 4, 4]  # num_down = len(ch_mult)-1
-      num_res_blocks: 2
+      channel_mult: [1, 2, 4, 8]  # num_down = len(ch_mult)-1
+      num_res_blocks: 3
 
 data:
   class_path: MAI.DataModuleFromConfig
@@ -80,7 +76,7 @@ trainer:
         dirpath: "checkpoints"
         filename: "model_{epoch:03d}"
         save_top_k: -1
-        every_n_epochs: 5
+        every_n_epochs: 3
         monitor: "val/loss"
     - class_path: pytorch_lightning.callbacks.LearningRateMonitor
       init_args:

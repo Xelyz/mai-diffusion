@@ -233,7 +233,6 @@ class MaimaiConvertor():
             'hold_end_offset': 8,
             'touch': 33,
             'touch_offset': 33,
-            'is_hanabi': 33,
             'touch_holding': 1,
             'touch_hold_end_offset': 1,
             'slide_pass_through': 17,

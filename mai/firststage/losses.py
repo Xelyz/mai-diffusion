@@ -6,21 +6,17 @@ import torch.nn.functional
 import numpy as np
 
 class MaimaiReconstructLoss(torch.nn.Module):
-    def __init__(self, weight_tap=1.0, weight_start_offset=1.0, weight_holding=1.0, weight_end_offset=1.0, weight_break=1.0, weight_ex=1.0, weight_slide_head=1.0, weight_touch=1.0, weight_touch_offset=1.0, weight_touch_holding=1.0, weight_touch_hold_end_offset=1.0, weight_hanabi=1.0, weight_star_pass_through=1.0, weight_star_end_offset=1.0,
+    def __init__(self, weight_tap=1.0, weight_start_offset=1.0, weight_holding=1.0, weight_end_offset=1.0, weight_touch=1.0, weight_touch_offset=1.0, weight_touch_holding=1.0, weight_touch_hold_end_offset=1.0, weight_star_pass_through=1.0, weight_star_end_offset=1.0,
                  label_smoothing=0.0, gamma=2.0):
         super(MaimaiReconstructLoss, self).__init__()
         self.weight_tap = weight_tap
         self.weight_start_offset = weight_start_offset
         self.weight_holding = weight_holding
         self.weight_end_offset = weight_end_offset
-        self.weight_break = weight_break
-        self.weight_ex = weight_ex
-        self.weight_slide_head = weight_slide_head
         self.weight_touch = weight_touch
         self.weight_touch_offset = weight_touch_offset
         self.weight_touch_holding = weight_touch_holding
         self.weight_touch_hold_end_offset = weight_touch_hold_end_offset
-        self.weight_hanabi = weight_hanabi
         self.weight_star_pass_through = weight_star_pass_through
         self.weight_star_end_offset = weight_star_end_offset
         self.bce_loss = torch.nn.BCEWithLogitsLoss(reduction='none')
@@ -126,9 +122,6 @@ class MaimaiReconstructLoss(torch.nn.Module):
         touch_offset_loss = self.get_key_loss(input_dict['touch_offset'], recon_dict['touch_offset'],
                                                 valid_flag * is_touch_start,
                                                 self.mse_loss)
-        hanabi_loss = self.get_key_loss(input_dict['is_hanabi'], recon_dict['is_hanabi'],
-                                    valid_flag * is_touch_start,
-                                    self.label_smoothing_bce_loss)
         touch_holding_loss = self.get_key_loss(input_dict['touch_holding'], recon_dict['touch_holding'],
                                                valid_flag,
                                                self.label_smoothing_bce_loss)
@@ -160,7 +153,6 @@ class MaimaiReconstructLoss(torch.nn.Module):
                 offset_end_loss * self.weight_end_offset + 
                 touch_loss * self.weight_touch +
                 touch_offset_loss * self.weight_touch_offset +
-                hanabi_loss * self.weight_hanabi +
                 touch_holding_loss * self.weight_touch_holding +
                 touch_hold_end_offset_loss * self.weight_touch_hold_end_offset +
                 slide_pass_through_loss * self.weight_star_pass_through +
@@ -173,7 +165,6 @@ class MaimaiReconstructLoss(torch.nn.Module):
             'offset_end_loss': offset_end_loss.detach().item(),
             'touch_loss': touch_loss.detach().item(),
             'touch_offset_loss': touch_offset_loss.detach().item(),
-            'hanabi_loss': hanabi_loss.detach().item(),
             'touch_holding_loss': touch_holding_loss.detach().item(),
             'touch_hold_end_offset_loss': touch_hold_end_offset_loss.detach().item(),
             'slide_pass_through_loss': slide_pass_through_loss.detach().item(),
