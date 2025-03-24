@@ -40,7 +40,7 @@ data:
     wrap: false
     num_workers: 2
     common_params:
-      data_dir: "/content/drive/My Drive/exchange/json"
+      data_dir: "/content/drive/My Drive/wy/json"
       # data_dir: "/Volumes/XelesteSSD/maiCharts/json"
       csv_file: "data/songs.csv"
       sr: 22050
