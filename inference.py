@@ -5,7 +5,7 @@ from mai.util import instantiate_from_config
 from mai.data.convertor import get_maimai_data, save_maimai_file
 
 # Load the YAML configuration file
-with open('configs/mai/autoencoder_cli_tap.yaml', 'r') as file:
+with open('configs/mai/autoencoder_cli.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 # Instantiate the model
@@ -33,7 +33,7 @@ converter_params = {
 chart_path = "/Volumes/XelesteSSD/maiCharts/json/Cryst/Singularity/MASTER.json"  # Replace with your chart path
 song_data = None  # Optional song metadata
 data, meta = get_maimai_data(chart_path, None, song_data, converter_params)
-obj_array, valid_flag = meta.convertor.objects_to_array(data, "tap")
+obj_array, valid_flag = meta.convertor.objects_to_array(data, None)
 
 # Convert to tensor and add batch dimension
 notes = torch.tensor(obj_array).unsqueeze(0)
@@ -42,11 +42,6 @@ notes = torch.tensor(obj_array).unsqueeze(0)
 with torch.no_grad():
     reconstructions, z = model(notes)
 
-    reconstructions = torch.nn.functional.pad(
-            reconstructions, 
-            (0, 0, 0, 125 - reconstructions.shape[1], 0, 0)
-        )
-    
     # Save reconstructed chart
     output_dir = 'reconstructions'
     os.makedirs(output_dir, exist_ok=True)
