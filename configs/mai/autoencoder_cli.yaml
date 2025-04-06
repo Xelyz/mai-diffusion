@@ -4,7 +4,7 @@ model:
   class_path: mug.firststage.autoencoder.AutoencoderKL
   init_args:
     # Main model parameters
-    learning_rate: 0.0001
+    learning_rate: 0.001
     monitor: "val/loss"
     kl_weight: 0.001
 
@@ -12,16 +12,16 @@ model:
     lossconfig:
       target: mai.firststage.losses.MaimaiReconstructLoss
       params:
-        weight_tap: 10.0
-        weight_start_offset: 2.0
-        weight_holding: 1.0
+        weight_tap: 20.0
+        weight_start_offset: 4.0
+        weight_holding: 1.2
         weight_end_offset: 0.6
-        weight_touch: 7.0
+        weight_touch: 5.0
         weight_touch_offset: 1.5
         weight_touch_holding: 0.6
         weight_touch_hold_end_offset: 0.5
         weight_star_pass_through: 0.7
-        weight_star_end_offset: 0.5
+        weight_star_end_offset: 0.2
         label_smoothing: 0.01
 
     # Model architecture configuration
