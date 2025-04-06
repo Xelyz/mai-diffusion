@@ -12,16 +12,16 @@ model:
     lossconfig:
       target: mai.firststage.losses.MaimaiReconstructLoss
       params:
-        weight_tap: 2.0
-        weight_start_offset: 1
-        weight_holding: 0.8
-        weight_end_offset: 0.3
-        weight_touch: 1.5
-        weight_touch_offset: 0.7
+        weight_tap: 10.0
+        weight_start_offset: 2.0
+        weight_holding: 1.0
+        weight_end_offset: 0.6
+        weight_touch: 7.0
+        weight_touch_offset: 1.5
         weight_touch_holding: 0.6
-        weight_touch_hold_end_offset: 0.2
+        weight_touch_hold_end_offset: 0.5
         weight_star_pass_through: 0.7
-        weight_star_end_offset: 0.1
+        weight_star_end_offset: 0.5
         label_smoothing: 0.01
 
     # Model architecture configuration
